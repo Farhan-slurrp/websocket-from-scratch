@@ -17,7 +17,7 @@ type WebSocket struct {
 	TcpServer net.Listener
 }
 
-func NewWebSocket(path string, host string, port string) *WebSocket {
+func NewWebSocket(path string, port string) *WebSocket {
 	l, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		panic(fmt.Sprintf("error on starting a new server on port %s", port))
