@@ -86,12 +86,9 @@ func getHeader(reader *bufio.Reader) (string, error) {
 }
 
 func createWebSocketAccept(key string) string {
-	// Create SHA-1 hash
 	h := sha1.New()
 	h.Write([]byte(key + WS_MAGIC_STRING))
 	digest := h.Sum(nil)
-
-	// Encode to Base64
 	acceptKey := base64.StdEncoding.EncodeToString(digest)
 
 	return acceptKey
