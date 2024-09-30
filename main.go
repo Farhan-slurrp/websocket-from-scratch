@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	ws := websocket.NewWebSocket("/", "ws://localhost", "8000")
+	ws := websocket.NewWebSocket("/", "8000")
 	for {
 		webSocketConnection := ws.Accept()
 		fmt.Println("Connected")
