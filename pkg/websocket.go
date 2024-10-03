@@ -91,13 +91,13 @@ func createWebSocketAccept(key string) string {
 }
 
 func send400(socket net.Conn) {
-	msg := "HTTP/1.1 400 Bad Request\r\n" +
+	response := "HTTP/1.1 400 Bad Request\r\n" +
 		"Content-Type: text/plain\r\n" +
 		"Connection: close\r\n" +
 		"\r\n" +
 		"Incorrect request"
 
-	socket.Write([]byte(msg))
+	socket.Write([]byte(response))
 	socket.Close()
 }
 
