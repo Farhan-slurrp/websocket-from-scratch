@@ -53,9 +53,7 @@ func (ws *WebSocket) sendHandshake(socket net.Conn) (string, bool) {
 	}
 
 	secretKeyRe := regexp.MustCompile(`Sec-WebSocket-Key: (.*)\r\n`)
-
 	secretKeyMatches := secretKeyRe.FindStringSubmatch(header)
-
 	if len(secretKeyMatches) > 0 {
 		return secretKeyMatches[1], true
 	}
