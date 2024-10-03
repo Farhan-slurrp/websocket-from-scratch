@@ -14,7 +14,7 @@ func main() {
 				fmt.Println("Connected")
 				message := connection.Recv()
 				for message != "" {
-					// fmt.Println(message)
+					fmt.Println(message)
 					message = connection.Recv()
 				}
 			}(webSocketConnection)

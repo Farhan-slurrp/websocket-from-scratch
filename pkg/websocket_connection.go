@@ -1,6 +1,9 @@
 package websocket
 
-import "net"
+import (
+	"encoding/binary"
+	"net"
+)
 
 type WebSocketConnection struct {
 	socket net.Conn
@@ -12,7 +15,60 @@ func NewWebSocketConnection(socket net.Conn) *WebSocketConnection {
 	}
 }
 
-func (wsC *WebSocketConnection) Recv() string {
+func (wsConn *WebSocketConnection) Recv() string {
+	// finAndOpCode
+	_, err := wsConn.readBytes(1)
+	if err != nil {
+		return ""
+	}
 
-	return "here"
+	maskAndLengthIndicator, err := wsConn.readBytes(1)
+	if err != nil {
+		return ""
+	}
+
+	lengthIndicator := int(maskAndLengthIndicator[0] & 0x7F)
+
+	var payloadLength int
+	if lengthIndicator <= 125 {
+		payloadLength = lengthIndicator
+	} else if lengthIndicator == 126 {
+		lengthBytes, err := wsConn.readBytes(2)
+		if err != nil {
+			return ""
+		}
+		payloadLength = int(binary.BigEndian.Uint16(lengthBytes))
+	} else {
+		lengthBytes, err := wsConn.readBytes(8)
+		if err != nil {
+			return ""
+		}
+		payloadLength = int(binary.BigEndian.Uint64(lengthBytes))
+	}
+
+	maskKey, err := wsConn.readBytes(4)
+	if err != nil {
+		return ""
+	}
+
+	encodedPayload, err := wsConn.readBytes(payloadLength)
+	if err != nil {
+		return ""
+	}
+
+	decodedPayload := make([]byte, payloadLength)
+	for i := 0; i < payloadLength; i++ {
+		decodedPayload[i] = encodedPayload[i] ^ maskKey[i%4]
+	}
+
+	return string(decodedPayload)
+}
+
+func (wsConn *WebSocketConnection) readBytes(n int) ([]byte, error) {
+	buffer := make([]byte, n)
+	_, err := wsConn.socket.Read(buffer)
+	if err != nil {
+		return nil, err
+	}
+	return buffer, nil
 }
