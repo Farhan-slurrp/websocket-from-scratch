@@ -31,41 +31,36 @@ func NewWebSocket(path string, port string) *WebSocket {
 
 func (ws *WebSocket) Accept() *WebSocketConnection {
 	socket, err := ws.TcpServer.Accept()
+
 	if err != nil {
 		panic("error on accepting the connection")
 	}
-	if ws.sendHandshake(socket) {
+	if key, ok := ws.sendHandshake(socket); ok {
+		sendHandshakeResponse(socket, key)
 		return NewWebSocketConnection(socket)
-	}
-	return nil
-}
-
-func (ws *WebSocket) sendHandshake(socket net.Conn) bool {
-	reader := bufio.NewReader(socket)
-
-	_, err := reader.ReadString('\n')
-	if err != nil {
-		return false
-	}
-
-	header, err := getHeader(reader)
-	if err != nil {
-		return false
-	}
-	getReqRe := regexp.MustCompile(fmt.Sprintf(`GET %s HTTP/1.1`, ws.Path))
-	secretKeyRe := regexp.MustCompile(`Sec-WebSocket-Key: (.*)\r\n`)
-
-	getReqMatches := getReqRe.FindStringSubmatch(header)
-	secretKeyMatches := secretKeyRe.FindStringSubmatch(header)
-
-	if len(getReqMatches) > 0 || len(secretKeyMatches) > 0 {
-		wsAccept := createWebSocketAccept(secretKeyMatches[1])
-		sendHandshakeResponse(socket, wsAccept)
-		return true
 	}
 
 	send400(socket)
-	return false
+	return nil
+}
+
+func (ws *WebSocket) sendHandshake(socket net.Conn) (string, bool) {
+	reader := bufio.NewReader(socket)
+
+	header, err := getHeader(reader)
+	if err != nil {
+		return "", false
+	}
+
+	secretKeyRe := regexp.MustCompile(`Sec-WebSocket-Key: (.*)\r\n`)
+
+	secretKeyMatches := secretKeyRe.FindStringSubmatch(header)
+
+	if len(secretKeyMatches) > 0 {
+		return secretKeyMatches[1], true
+	}
+
+	return "", false
 }
 
 func getHeader(reader *bufio.Reader) (string, error) {
@@ -89,6 +84,7 @@ func createWebSocketAccept(key string) string {
 	h := sha1.New()
 	h.Write([]byte(key + WS_MAGIC_STRING))
 	digest := h.Sum(nil)
+
 	acceptKey := base64.StdEncoding.EncodeToString(digest)
 
 	return acceptKey
@@ -100,14 +96,23 @@ func send400(socket net.Conn) {
 		"Connection: close\r\n" +
 		"\r\n" +
 		"Incorrect request"
+
 	socket.Write([]byte(msg))
 	socket.Close()
 }
 
-func sendHandshakeResponse(socket net.Conn, wsAccept string) {
-	msg := fmt.Sprintf("HTTP/1.1 101 Switching Protocols\r\n"+
-		"Upgrade: websocket\r\n"+
-		"Connection: Upgrade\r\n"+
-		"Sec-WebSocket-Accept: %s\r\n", wsAccept)
-	socket.Write([]byte(msg))
+func sendHandshakeResponse(socket net.Conn, key string) {
+	wsAccept := createWebSocketAccept(key)
+
+	response := fmt.Sprintf(
+		"HTTP/1.1 101 Switching Protocols\r\n"+
+			"Upgrade: websocket\r\n"+
+			"Connection: Upgrade\r\n"+
+			"Sec-WebSocket-Accept: %s\r\n\r\n", wsAccept)
+
+	_, err := socket.Write([]byte(response))
+	if err != nil {
+		fmt.Println("Failed to write handshake response:", err)
+		return
+	}
 }

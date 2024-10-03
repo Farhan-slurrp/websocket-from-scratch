@@ -9,12 +9,15 @@ func main() {
 	ws := websocket.NewWebSocket("/", "8000")
 	for {
 		webSocketConnection := ws.Accept()
-		fmt.Println("Connected")
 		if webSocketConnection != nil {
-			for {
-				message := webSocketConnection.Recv()
-				fmt.Println(message)
-			}
+			go func(connection *websocket.WebSocketConnection) {
+				fmt.Println("Connected")
+				message := connection.Recv()
+				for message != "" {
+					// fmt.Println(message)
+					message = connection.Recv()
+				}
+			}(webSocketConnection)
 		}
 	}
 }

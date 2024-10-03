@@ -13,5 +13,6 @@ func NewWebSocketConnection(socket net.Conn) *WebSocketConnection {
 }
 
 func (wsC *WebSocketConnection) Recv() string {
+
 	return "here"
 }
