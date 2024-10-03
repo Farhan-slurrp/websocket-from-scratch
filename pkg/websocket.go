@@ -111,6 +111,5 @@ func sendHandshakeResponse(socket net.Conn, key string) {
 	_, err := socket.Write([]byte(response))
 	if err != nil {
 		fmt.Println("Failed to write handshake response:", err)
-		return
 	}
 }
