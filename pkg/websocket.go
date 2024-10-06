@@ -13,18 +13,16 @@ import (
 const WS_MAGIC_STRING = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
 type WebSocket struct {
-	Path      string
 	TcpServer net.Listener
 }
 
-func NewWebSocket(path string, port string) *WebSocket {
+func NewWebSocket(port string) *WebSocket {
 	l, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		panic(fmt.Sprintf("error on starting a new server on port %s", port))
 	}
 
 	return &WebSocket{
-		Path:      path,
 		TcpServer: l,
 	}
 }
@@ -35,7 +33,7 @@ func (ws *WebSocket) Accept() *WebSocketConnection {
 	if err != nil {
 		panic("error on accepting the connection")
 	}
-	if key, ok := ws.sendHandshake(socket); ok {
+	if key, ok := sendHandshake(socket); ok {
 		sendHandshakeResponse(socket, key)
 		return NewWebSocketConnection(socket)
 	}
@@ -44,7 +42,7 @@ func (ws *WebSocket) Accept() *WebSocketConnection {
 	return nil
 }
 
-func (ws *WebSocket) sendHandshake(socket net.Conn) (string, bool) {
+func sendHandshake(socket net.Conn) (string, bool) {
 	reader := bufio.NewReader(socket)
 
 	header, err := getHeader(reader)

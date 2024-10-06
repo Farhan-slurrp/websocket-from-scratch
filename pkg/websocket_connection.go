@@ -16,6 +16,10 @@ func NewWebSocketConnection(socket net.Conn) *WebSocketConnection {
 	}
 }
 
+func (wsConn *WebSocketConnection) Close() error {
+	return wsConn.Close()
+}
+
 func (wsConn *WebSocketConnection) Recv() string {
 	// finAndOpCode
 	_, err := wsConn.readBytes(1)
