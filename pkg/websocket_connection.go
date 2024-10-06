@@ -17,7 +17,7 @@ func NewWebSocketConnection(socket net.Conn) *WebSocketConnection {
 }
 
 func (wsConn *WebSocketConnection) Close() error {
-	return wsConn.Close()
+	return wsConn.socket.Close()
 }
 
 func (wsConn *WebSocketConnection) Recv() string {
