@@ -14,7 +14,7 @@ func main() {
 				fmt.Println("Connected")
 				message := connection.Recv()
 				for message != "" {
-					fmt.Println(message)
+					connection.Send(fmt.Sprintf("Received %s, thanks!", message))
 					message = connection.Recv()
 				}
 			}(webSocketConnection)

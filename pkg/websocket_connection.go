@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"bytes"
 	"encoding/binary"
 	"net"
 )
@@ -62,6 +63,36 @@ func (wsConn *WebSocketConnection) Recv() string {
 	}
 
 	return string(decodedPayload)
+}
+
+func (wsConn *WebSocketConnection) Send(message string) error {
+	var buffer bytes.Buffer
+	buffer.WriteByte(129)
+
+	messageSize := len(message)
+
+	if messageSize < 125 {
+		buffer.WriteByte(byte(messageSize))
+	} else if messageSize < 1<<16 {
+		buffer.WriteByte(byte(126))
+
+		err := binary.Write(&buffer, binary.BigEndian, uint16(messageSize))
+		if err != nil {
+			return err
+		}
+	} else {
+		buffer.WriteByte(byte(127))
+
+		err := binary.Write(&buffer, binary.BigEndian, uint64(messageSize))
+		if err != nil {
+			return err
+		}
+	}
+
+	buffer.Write([]byte(message))
+
+	_, err := wsConn.socket.Write(buffer.Bytes())
+	return err
 }
 
 func (wsConn *WebSocketConnection) readBytes(n int) ([]byte, error) {

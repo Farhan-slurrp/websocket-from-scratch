@@ -95,8 +95,14 @@ func send400(socket net.Conn) {
 		"\r\n" +
 		"Incorrect request"
 
-	socket.Write([]byte(response))
-	socket.Close()
+	_, err := socket.Write([]byte(response))
+	if err != nil {
+		fmt.Println("Failed to write 400 response:", err)
+	}
+	err = socket.Close()
+	if err != nil {
+		fmt.Sprintln("Failed to close the TCP connection")
+	}
 }
 
 func sendHandshakeResponse(socket net.Conn, key string) {
